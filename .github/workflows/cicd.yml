@@ -264,8 +264,8 @@ jobs:
           RIUS_DISABLED: ${{ secrets.RIUS_DISABLED }}
           RIUS_CAPTURE_CONTENT: ${{ secrets.RIUS_CAPTURE_CONTENT }}
 
-          HITL_ENABLED: ${{ secrets.HITL_ENABLED }}
-          MEMORY_TURNS: ${{ secrets.MEMORY_TURNS }}
+          HITL_ENABLED: ${{ secrets.HITL_ENABLED || 'false' }}
+          MEMORY_TURNS: ${{ secrets.MEMORY_TURNS || '6' }}
 
         run: |
           set -euo pipefail
@@ -288,8 +288,6 @@ jobs:
             RIUS_SERVICE_NAME
             RIUS_DISABLED
             RIUS_CAPTURE_CONTENT
-            HITL_ENABLED
-            MEMORY_TURNS
           )
 
           for name in "${REQUIRED[@]}"; do
@@ -346,8 +344,8 @@ jobs:
           RIUS_CAPTURE_CONTENT: ${{ secrets.RIUS_CAPTURE_CONTENT }}
 
           # Application
-          HITL_ENABLED: ${{ secrets.HITL_ENABLED }}
-          MEMORY_TURNS: ${{ secrets.MEMORY_TURNS }}
+          HITL_ENABLED: ${{ secrets.HITL_ENABLED || 'false' }}
+          MEMORY_TURNS: ${{ secrets.MEMORY_TURNS || '6' }}
 
         run: |
           set -euo pipefail
