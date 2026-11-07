@@ -1,9 +1,22 @@
 // Simple single-workspace UI. No login, tokens, or user accounts.
 const $=id=>document.getElementById(id);
 // Single-workspace conversation identifier, not an authentication token.
-let conversationId=sessionStorage.getItem('atlas_conversation_id')||crypto.randomUUID();
+const createConversationId=()=>{
+  if(globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  const bytes=new Uint8Array(16);
+  if(globalThis.crypto?.getRandomValues){
+    globalThis.crypto.getRandomValues(bytes);
+  }else{
+    for(let i=0;i<bytes.length;i++) bytes[i]=Math.floor(Math.random()*256);
+  }
+  bytes[6]=(bytes[6]&0x0f)|0x40;
+  bytes[8]=(bytes[8]&0x3f)|0x80;
+  const hex=[...bytes].map(value=>value.toString(16).padStart(2,'0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+};
+let conversationId=sessionStorage.getItem('atlas_conversation_id')||createConversationId();
 sessionStorage.setItem('atlas_conversation_id',conversationId);
-$('newChat').onclick=()=>{conversationId=crypto.randomUUID();sessionStorage.setItem('atlas_conversation_id',conversationId);$('messages').replaceChildren();toast('Started a new conversation')};
+$('newChat').onclick=()=>{conversationId=createConversationId();sessionStorage.setItem('atlas_conversation_id',conversationId);$('messages').replaceChildren();toast('Started a new conversation')};
 
 const toast=msg=>{const el=$('toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',4000)};
 const api=async(path,options={})=>{const res=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});const data=await res.json();if(!res.ok)throw Error(data.detail||'Request failed');return data};
