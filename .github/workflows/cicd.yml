@@ -48,7 +48,7 @@ jobs:
     name: Continuous Delivery
     needs: integration
     runs-on: ubuntu-24.04
-    environment: production
+    environment: prod
     env:
       AWS_REGION: ${{ secrets.AWS_REGION || vars.AWS_REGION || 'ap-southeast-2' }}
 
@@ -120,7 +120,7 @@ jobs:
     needs: build-and-push-ecr-image
 
     runs-on: [self-hosted, linux, x64, atlas-ec2]
-    environment: production
+    environment: prod
     env:
       AWS_REGION: ${{ secrets.AWS_REGION || vars.AWS_REGION || 'ap-southeast-2' }}
 
