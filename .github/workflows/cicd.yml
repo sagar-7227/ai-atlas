@@ -86,6 +86,28 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Ensure ECR Repository Exists
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$ECR_REPOSITORY" == *".amazonaws.com/"* || "$ECR_REPOSITORY" == http* ]]; then
+            echo "::error::ECR_REPOSITORY_NAME must be the repository name only, not a full registry URI."
+            exit 1
+          fi
+
+          if ! aws ecr describe-repositories \
+            --repository-names "$ECR_REPOSITORY" \
+            --region "$AWS_REGION" \
+            >/dev/null 2>&1; then
+            echo "ECR repository '$ECR_REPOSITORY' does not exist; creating it..."
+            aws ecr create-repository \
+              --repository-name "$ECR_REPOSITORY" \
+              --region "$AWS_REGION"
+          fi
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
