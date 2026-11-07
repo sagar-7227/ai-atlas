@@ -86,17 +86,34 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ensure ECR Repository Exists
+      - name: Normalize ECR Repository Name
+        id: ecr-repository
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
         run: |
           set -euo pipefail
 
-          if [[ "$ECR_REPOSITORY" == *".amazonaws.com/"* || "$ECR_REPOSITORY" == http* ]]; then
-            echo "::error::ECR_REPOSITORY_NAME must be the repository name only, not a full registry URI."
+          repository="${ECR_REPOSITORY}"
+          if [[ "$repository" == *".amazonaws.com/"* ]]; then
+            repository="${repository##*/}"
+          elif [[ "$repository" == http* ]]; then
+            repository="${repository#*://}"
+            repository="${repository##*/}"
+          fi
+
+          if [[ -z "$repository" || "$repository" == *"/"* || "$repository" == *":"* ]]; then
+            echo "::error::Unable to normalize ECR_REPOSITORY_NAME to a repository name."
             exit 1
           fi
+
+          echo "repository=$repository" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure ECR Repository Exists
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          ECR_REPOSITORY: ${{ steps.ecr-repository.outputs.repository }}
+        run: |
+          set -euo pipefail
 
           if ! aws ecr describe-repositories \
             --repository-names "$ECR_REPOSITORY" \
@@ -115,7 +132,7 @@ jobs:
       - name: Build and Push Docker Image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          ECR_REPOSITORY: ${{ steps.ecr-repository.outputs.repository }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -159,6 +176,28 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Normalize ECR Repository Name
+        id: ecr-repository
+        env:
+          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+        run: |
+          set -euo pipefail
+
+          repository="${ECR_REPOSITORY}"
+          if [[ "$repository" == *".amazonaws.com/"* ]]; then
+            repository="${repository##*/}"
+          elif [[ "$repository" == http* ]]; then
+            repository="${repository#*://}"
+            repository="${repository##*/}"
+          fi
+
+          if [[ -z "$repository" || "$repository" == *"/"* || "$repository" == *":"* ]]; then
+            echo "::error::Unable to normalize ECR_REPOSITORY_NAME."
+            exit 1
+          fi
+
+          echo "repository=$repository" >> "$GITHUB_OUTPUT"
+
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -170,7 +209,7 @@ jobs:
         id: image
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
-          ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_NAME }}
+          ECR_REPOSITORY: ${{ steps.ecr-repository.outputs.repository }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           set -euo pipefail
