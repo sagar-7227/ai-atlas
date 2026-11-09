@@ -18,6 +18,24 @@ Atlas is a demo enterprise knowledge assistant built with FastAPI, LangGraph, Am
 - Feedback, metrics, and admin views
 - Optional Rius/GlassFlow observability
 
+## Screenshots
+
+### Knowledge Chat
+
+![Atlas knowledge chat](screenshots/knowledge-chat.png)
+
+### Documents
+
+![Atlas document management](screenshots/documents.png)
+
+### Approvals
+
+![Atlas approval requests](screenshots/approvals.png)
+
+### Metrics
+
+![Atlas operational metrics](screenshots/metrics.png)
+
 ## Architecture
 
 ```text
